@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Four-Block Daily Reset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #EDE8DC;
+    --stone-dim: #E1DACB;
+    --ink: #2B2823;
+    --ink-soft: #55503F;
+    --teal: #3D5A50;
+    --teal-dim: #A9BAAE;
+    --ochre: #C08A3E;
+    --card: #FBF9F4;
+    --line: #D8D0BE;
+    --danger: #A85238;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--stone);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  .top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .top h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .top .day-progress {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+
+  .arc {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .arc button {
+    flex: 1;
+    border: none;
+    background: var(--stone-dim);
+    border-radius: 10px;
+    padding: 10px 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .arc button .time {
+    font-size: 0.62rem;
+    font-weight: 500;
+    opacity: 0.7;
+  }
+  .arc button.active {
+    background: var(--teal);
+    color: var(--stone);
+  }
+  .arc button.done:not(.active) {
+    background: var(--teal-dim);
+    color: var(--ink);
+  }
+  .arc button.done:not(.active)::after {
+    content: " ✓";
+  }
+
+  .block-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 22px 20px;
+  }
+  .block-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    margin: 0 0 4px;
+    color: var(--ink);
+  }
+  .block-focus {
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    line-height: 1.45;
+    margin: 0 0 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .timer-display {
+    font-family: 'Fraunces', serif;
+    font-size: 2.8rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .timer-controls {
+    display: flex;
+    gap: 8px;
+  }
+  .timer-controls button {
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .timer-controls button.primary {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: var(--stone);
+  }
+  .timer-controls button.primary.pause {
+    background: var(--ochre);
+    border-color: var(--ochre);
+  }
+
+  .ex-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .ex-item {
+    border-bottom: 1px solid var(--line);
+  }
+  .ex-item:last-child { border-bottom: none; }
+  .ex-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+  }
+  .ex-check {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1.5px solid var(--ink-soft);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--stone);
+    font-size: 0.75rem;
+  }
+  .ex-check.checked {
+    background: var(--teal);
+    border-color: var(--teal);
+  }
+  .ex-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+  }
+  .ex-text {
+    flex: 1;
+    font-size: 0.92rem;
+    line-height: 1.3;
+  }
+  .ex-name.checked-text {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-color: var(--teal-dim);
+  }
+  .ex-dur {
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+  .ex-chevron {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--ink-soft);
+    transition: transform 0.2s ease;
+  }
+  .ex-item.expanded .ex-chevron {
+    transform: rotate(180deg);
+    color: var(--teal);
+  }
+
+  /* Expanded Exercise Viewer */
+  .ex-details {
+    display: none;
+    padding: 4px 0 16px 34px;
+  }
+  .ex-item.expanded .ex-details {
+    display: block;
+  }
+
+  .view-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .view-tabs {
+    display: flex;
+    background: var(--stone-dim);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .tab-btn {
+    border: none;
+    background: transparent;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab-btn.active {
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .anim-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ctrl-btn {
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .ctrl-btn:hover {
+    background: var(--stone-dim);
+  }
+
+  .anim-container {
+    background: var(--stone-dim);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .anim-stage {
+    width: 150px;
+    height: 150px;
+  }
+  .anim-step-pills {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+  .step-pill {
+    flex: 1;
+    max-width: 110px;
+    text-align: center;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    padding: 4px 6px;
+    background: var(--card);
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+  }
+  .step-pill.active {
+    opacity: 1;
+    border-color: var(--teal);
+    color: var(--teal);
+    font-weight: 700;
+    background: var(--card);
+  }
+
+  .pose-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .pose-cell {
+    background: var(--stone-dim);
+    border-radius: 10px;
+    padding: 6px 6px 8px;
+    text-align: center;
+  }
+
+  /* Enhanced Volumetric SVG Styling */
+  .pose-fig {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .limb-near {
+    stroke: var(--ink);
+    stroke-width: 11;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .limb-far {
+    stroke: var(--ink-soft);
+    stroke-width: 9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.45;
+  }
+  .torso-block {
+    fill: var(--ink);
+    opacity: 0.95;
+  }
+  .pose-joint {
+    fill: var(--card);
+    stroke: var(--ink);
+    stroke-width: 2.5;
+  }
+  .joint-highlight {
+    fill: var(--ochre);
+    stroke: var(--card);
+    stroke-width: 2;
+  }
+  .pose-head {
+    fill: var(--card);
+    stroke: var(--ink);
+    stroke-width: 4.5;
+  }
+  .pose-ground {
+    stroke: var(--line);
+    stroke-width: 2.5;
+    stroke-dasharray: 4 4;
+  }
+  .motion-arrow {
+    stroke: var(--ochre);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 4 3;
+    fill: none;
+  }
+  .arrow-head {
+    fill: var(--ochre);
+  }
+  .pose-caption {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+
+  .nav-bottom {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 22px;
+  }
+  .nav-bottom button {
+    border: none;
+    background: transparent;
+    color: var(--teal);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 4px;
+  }
+  .nav-bottom button:disabled {
+    color: var(--line);
+    cursor: default;
+  }
+
+  .reset-row {
+    text-align: center;
+    margin-top: 28px;
+  }
+  .reset-row button {
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --stone: #211F1A;
+      --stone-dim: #2C2A23;
+      --ink: #EFEAE0;
+      --ink-soft: #AFA894;
+      --teal: #7FA394;
+      --teal-dim: #3E4C44;
+      --ochre: #D6A25C;
+      --card: #29271F;
+      --line: #3B382D;
+    }
+    .ex-check { color: #211F1A; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Daily Reset</h1>
+    <div class="day-progress" id="dayProgress">0 / 4 blocks done</div>
+  </div>
+
+  <div class="arc" id="arcNav"></div>
+
+  <div class="block-card">
+    <h2 class="block-title" id="blockTitle"></h2>
+    <p class="block-focus" id="blockFocus"></p>
+
+    <div class="timer-row">
+      <div class="timer-display" id="timerDisplay">15:00</div>
+      <div class="timer-controls">
+        <button id="resetBtn" title="Reset timer">↺</button>
+        <button id="playBtn" class="primary">Start</button>
+      </div>
+    </div>
+
+    <ul class="ex-list" id="exList"></ul>
+
+    <div class="nav-bottom">
+      <button id="prevBtn">← Previous block</button>
+      <button id="nextBtn">Next block →</button>
+    </div>
+  </div>
+
+  <div class="reset-row">
+    <button id="clearAll">Clear today's progress</button>
+  </div>
+</div>
+
+<script>
+/* ---------- Pose figure library ---------- */
+const POSES = {
+  standNeutral:   { head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[50,40],hand:[45,52]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  standInhale:    { head:[62,16], shoulder:[60,25], hip:[56,62], arm1:{elbow:[52,44],hand:[56,56]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  neckTiltSide:   { head:[68,22], shoulder:[58,28], hip:[56,62], arm1:{elbow:[50,40],hand:[45,52]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  chinTuck:       { head:[54,20], shoulder:[58,28], hip:[56,62], arm1:{elbow:[50,40],hand:[45,52]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  shoulderRollUp: { head:[60,20], shoulder:[58,20], hip:[56,62], arm1:{elbow:[52,34],hand:[47,46]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  armCircleOverhead:{ head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[66,12],hand:[72,2]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  forwardFoldHang:{ head:[58,88], shoulder:[56,72], hip:[56,60], arm1:{elbow:[52,80],hand:[50,96]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+
+  quadrupedNeutral:{ head:[26,52], shoulder:[42,58], hip:[86,58], arm1:{elbow:[36,76],hand:[34,96]}, leg1:{knee:[80,84],foot:[92,98]}, ground:false },
+  catRound:       { head:[28,66], shoulder:[42,62], spineMid:[64,44], hip:[86,64], arm1:{elbow:[36,80],hand:[34,98]}, leg1:{knee:[80,86],foot:[92,100]}, ground:false },
+  cowArch:        { head:[24,40], shoulder:[42,50], spineMid:[64,66], hip:[86,52], arm1:{elbow:[36,80],hand:[34,98]}, leg1:{knee:[80,86],foot:[92,100]}, ground:false },
+  threadReach:    { head:[26,58], shoulder:[42,58], hip:[86,58], arm1:{elbow:[55,70],hand:[70,86]}, leg1:{knee:[80,84],foot:[92,98]}, ground:false },
+  threadRotateUp: { head:[30,46], shoulder:[42,54], hip:[86,58], arm1:{elbow:[50,30],hand:[58,10]}, leg1:{knee:[80,84],foot:[92,98]}, ground:false },
+  bearHoverKneesUp:{ head:[26,52], shoulder:[42,56], hip:[86,56], arm1:{elbow:[36,74],hand:[34,94]}, leg1:{knee:[80,78],foot:[92,92]}, ground:false },
+  birdDogExtend:  { head:[20,50], shoulder:[38,56], hip:[86,58], arm1:{elbow:[10,44],hand:[2,38]}, leg1:{knee:[100,58],foot:[116,58]}, ground:false },
+
+  hip90Left:      { head:[60,30], shoulder:[58,42], hip:[55,80], arm1:{elbow:[46,55],hand:[40,70]}, leg1:{knee:[75,78],foot:[95,86]}, leg2:{knee:[35,90],foot:[20,100]}, ground:false },
+  hip90Transition:{ head:[58,34], shoulder:[57,46], hip:[55,80], arm1:{elbow:[48,58],hand:[45,74]}, leg1:{knee:[60,84],foot:[75,90]}, leg2:{knee:[50,88],foot:[35,96]}, ground:false },
+  hip90Right:     { head:[60,30], shoulder:[58,42], hip:[55,80], arm1:{elbow:[70,55],hand:[76,70]}, leg1:{knee:[35,78],foot:[15,86]}, leg2:{knee:[75,90],foot:[90,100]}, ground:false },
+
+  lungeDown:      { head:[64,30], shoulder:[62,42], hip:[58,64], arm1:{elbow:[54,54],hand:[52,66]}, leg1:{knee:[62,80],foot:[68,100]}, leg2:{knee:[38,96],foot:[24,108]}, ground:true },
+  lungeRotateElbowGround:{ head:[50,60], shoulder:[54,58], hip:[58,64], arm1:{elbow:[64,88],hand:[68,100]}, leg1:{knee:[62,80],foot:[68,100]}, leg2:{knee:[38,96],foot:[24,108]}, ground:true },
+  lungeRotateArmUp:{ head:[70,26], shoulder:[66,40], hip:[58,64], arm1:{elbow:[74,20],hand:[80,4]}, leg1:{knee:[62,80],foot:[68,100]}, leg2:{knee:[38,96],foot:[24,108]}, ground:true },
+
+  childPoseCenter:{ head:[92,88], shoulder:[78,78], spineMid:[60,72], hip:[40,68], arm1:{elbow:[86,86],hand:[100,90]}, leg1:{knee:[32,80],foot:[24,90]}, ground:false },
+  childPoseReachSide:{ head:[85,80], shoulder:[78,78], spineMid:[60,72], hip:[40,68], arm1:{elbow:[95,70],hand:[110,60]}, leg1:{knee:[32,80],foot:[24,90]}, ground:false },
+
+  deadBugStart:   { head:[20,58], shoulder:[35,58], hip:[72,58], arm1:{elbow:[35,38],hand:[35,18]}, leg1:{knee:[70,34],foot:[92,40]}, ground:false },
+  deadBugExtend:  { head:[20,58], shoulder:[35,58], hip:[72,58], arm1:{elbow:[15,50],hand:[0,50]}, leg1:{knee:[90,60],foot:[112,60]}, ground:false },
+
+  bridgeDown:     { head:[15,60], shoulder:[32,60], hip:[62,60], arm1:{elbow:[28,50],hand:[24,42]}, leg1:{knee:[78,40],foot:[96,60]}, ground:false },
+  bridgeMid:      { head:[15,58], shoulder:[32,58], hip:[62,52], arm1:{elbow:[28,50],hand:[24,42]}, leg1:{knee:[78,38],foot:[96,58]}, ground:false },
+  bridgeUp:       { head:[15,58], shoulder:[32,58], hip:[62,44], arm1:{elbow:[28,50],hand:[24,42]}, leg1:{knee:[78,38],foot:[96,58]}, ground:false },
+  bridgeMarchKneeUp:{ head:[15,58], shoulder:[32,58], hip:[62,44], arm1:{elbow:[28,50],hand:[24,42]}, leg1:{knee:[62,20],foot:[70,10]}, ground:false },
+
+  clamClosed:     { head:[20,40], shoulder:[35,42], hip:[70,44], arm1:{elbow:[30,50],hand:[24,58]}, leg1:{knee:[85,50],foot:[70,66]}, ground:false },
+  clamOpen:       { head:[20,40], shoulder:[35,42], hip:[70,44], arm1:{elbow:[30,50],hand:[24,58]}, leg1:{knee:[92,36],foot:[74,64]}, ground:false },
+
+  plankSetup:     { head:[20,54], shoulder:[35,56], hip:[62,58], arm1:{elbow:[30,66],hand:[22,72]}, leg1:{knee:[75,70],foot:[85,78]}, ground:false },
+  plankHold:      { head:[15,50], shoulder:[32,52], hip:[65,54], arm1:{elbow:[28,66],hand:[20,72]}, leg1:{knee:[85,58],foot:[105,58]}, ground:false },
+
+  standArmsExtendedIn:{ head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[52,44],hand:[56,42]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+  pallofPressOut: { head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[70,38],hand:[85,38]}, leg1:{knee:[58,86],foot:[60,110]}, ground:true },
+
+  marchKneeUp:    { head:[58,18], shoulder:[56,28], hip:[54,60], arm1:{elbow:[64,44],hand:[70,34]}, leg1:{knee:[60,50],foot:[66,64]}, ground:true },
+
+  cossackCenter:  { head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[48,42],hand:[42,52]}, leg1:{knee:[58,86],foot:[60,110]}, leg2:{knee:[76,84],foot:[90,108]}, ground:true },
+  cossackShiftSide:{ head:[46,26], shoulder:[46,36], hip:[46,64], arm1:{elbow:[38,50],hand:[34,62]}, leg1:{knee:[46,86],foot:[46,110]}, leg2:{knee:[80,70],foot:[100,100]}, ground:true },
+
+  squatStand:     { head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[50,40],hand:[45,52]}, leg1:{knee:[58,86],foot:[60,110]}, leg2:{knee:[54,86],foot:[52,110]}, ground:true },
+  squatBottom:    { head:[58,46], shoulder:[56,54], hip:[54,80], arm1:{elbow:[70,60],hand:[86,58]}, leg1:{knee:[64,88],foot:[70,110]}, leg2:{knee:[44,88],foot:[38,110]}, ground:true },
+
+  lungeBack:      { head:[56,20], shoulder:[54,30], hip:[52,62], arm1:{elbow:[46,44],hand:[40,54]}, leg1:{knee:[54,86],foot:[56,110]}, leg2:{knee:[36,92],foot:[22,104]}, ground:true },
+  highKneeUp:     { head:[56,20], shoulder:[54,30], hip:[52,62], arm1:{elbow:[46,44],hand:[40,54]}, leg1:{knee:[54,86],foot:[56,110]}, leg2:{knee:[62,46],foot:[70,34]}, ground:true },
+
+  goalpostCenter: { head:[60,18], shoulder:[58,28], hip:[56,62], arm1:{elbow:[46,28],hand:[46,12]}, leg1:{knee:[58,86],foot:[60,110]}, leg2:{knee:[54,86],foot:[52,110]}, ground:true },
+  rotateRight:    { head:[70,20], shoulder:[66,28], hip:[56,62], arm1:{elbow:[80,26],hand:[92,20]}, leg1:{knee:[58,86],foot:[60,110]}, leg2:{knee:[54,86],foot:[52,110]}, ground:true },
+  rotateLeft:     { head:[46,20], shoulder:[50,28], hip:[56,62], arm1:{elbow:[34,26],hand:[22,20]}, leg1:{knee:[58,86],foot:[60,110]}, leg2:{knee:[54,86],foot:[52,110]}, ground:true },
+
+  lyingCalm:      { head:[15,60], shoulder:[32,60], hip:[68,60], arm1:{elbow:[30,68],hand:[26,76]}, leg1:{knee:[90,60],foot:[112,60]}, ground:false },
+  lyingInhale:    { head:[15,58], shoulder:[32,56], hip:[68,58], arm1:{elbow:[30,66],hand:[26,74]}, leg1:{knee:[90,58],foot:[112,58]}, ground:false },
+  lyingKneesBent: { head:[15,60], shoulder:[32,60], hip:[65,60], arm1:{elbow:[28,50],hand:[22,42]}, leg1:{knee:[80,40],foot:[98,60]}, ground:false },
+
+  figureFourCross:{ head:[15,60], shoulder:[32,60], hip:[65,60], arm1:{elbow:[28,50],hand:[22,42]}, leg1:{knee:[80,40],foot:[98,60]}, leg2:{knee:[85,52],foot:[70,44]}, ground:false },
+  figureFourPull: { head:[15,64], shoulder:[30,62], hip:[60,60], arm1:{elbow:[45,52],hand:[62,48]}, leg1:{knee:[74,34],foot:[92,54]}, leg2:{knee:[78,44],foot:[64,40]}, ground:false },
+
+  butterflyOpen:  { head:[15,60], shoulder:[32,60], hip:[62,60], arm1:{elbow:[28,68],hand:[22,76]}, leg1:{knee:[80,76],foot:[96,58]}, ground:false },
+
+  twistKneesSide: { head:[15,55], shoulder:[32,56], hip:[62,58], arm1:{elbow:[30,40],hand:[26,26]}, leg1:{knee:[70,80],foot:[86,90]}, ground:false },
+  twistKneesOtherSide:{ head:[15,64], shoulder:[32,62], hip:[62,58], arm1:{elbow:[30,80],hand:[26,94]}, leg1:{knee:[70,36],foot:[86,26]}, ground:false },
+
+  legsRaisingMid: { head:[15,60], shoulder:[32,60], hip:[62,60], arm1:{elbow:[28,68],hand:[22,76]}, leg1:{knee:[75,42],foot:[80,20]}, ground:false },
+  legsUpVertical: { head:[15,60], shoulder:[32,60], hip:[62,60], arm1:{elbow:[28,68],hand:[22,76]}, leg1:{knee:[62,30],foot:[62,4]}, ground:false },
+};
+
+/* Vector interpolation helper for GIF animation frame generator */
+function lerpVal(a, b, t) { return a + (b - a) * t; }
+function lerpPt(a, b, t) { return [lerpVal(a[0], b[0], t), lerpVal(a[1], b[1], t)]; }
+
+function interpolatePose(p1, p2, t) {
+  if (!p1 || !p2) return p1 || p2;
+  const res = { ground: p1.ground };
+  ['head', 'shoulder', 'spineMid', 'hip'].forEach(k => {
+    if (p1[k] && p2[k]) res[k] = lerpPt(p1[k], p2[k], t);
+    else if (p1[k] || p2[k]) res[k] = p1[k] || p2[k];
+  });
+  ['arm1', 'arm2', 'leg1', 'leg2'].forEach(limb => {
+    if (p1[limb] && p2[limb]) {
+      res[limb] = {};
+      ['knee', 'foot', 'elbow', 'hand'].forEach(part => {
+        if (p1[limb][part] && p2[limb][part]) {
+          res[limb][part] = lerpPt(p1[limb][part], p2[limb][part], t);
+        } else if (p1[limb][part] || p2[limb][part]) {
+          res[limb][part] = p1[limb][part] || p2[limb][part];
+        }
+      });
+    } else if (p1[limb] || p2[limb]) {
+      res[limb] = p1[limb] || p2[limb];
+    }
+  });
+  return res;
+}
+
+function drawLimb(a, b, isFar = false) {
+  const cls = isFar ? "limb-far" : "limb-near";
+  return `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" class="${cls}"/>`;
+}
+
+function drawJoint(p, isHighlight = false) {
+  const cls = isHighlight ? "joint-highlight" : "pose-joint";
+  const r = isHighlight ? 4 : 3;
+  return `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" class="${cls}"/>`;
+}
+
+function drawTorsoBlock(shoulder, hip, spineMid) {
+  if (spineMid) {
+    return `<path d="M ${shoulder[0]-4} ${shoulder[1]} Q ${spineMid[0]} ${spineMid[1]} ${hip[0]-3} ${hip[1]} L ${hip[0]+3} ${hip[1]} Q ${spineMid[0]} ${spineMid[1]} ${shoulder[0]+4} ${shoulder[1]} Z" class="torso-block"/>`;
+  }
+  return `<line x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" class="limb-near" style="stroke-width:14px;"/>`;
+}
+
+function drawPoseObject(p) {
+  if (!p) return '';
+  let s = `<svg viewBox="0 0 120 120" class="pose-fig">`;
+  
+  // Defs for reusable motion arrows
+  s += `<defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head"/>
+          </marker>
+        </defs>`;
+
+  if (p.ground) s += `<line x1="4" y1="112" x2="116" y2="112" class="pose-ground"/>`;
+
+  // Far-side limbs (rendered behind body for depth contrast)
+  if (p.arm2 && p.shoulder) s += drawLimb(p.shoulder, p.arm2.elbow, true) + drawLimb(p.arm2.elbow, p.arm2.hand, true);
+  if (p.leg2 && p.hip) s += drawLimb(p.hip, p.leg2.knee, true) + drawLimb(p.leg2.knee, p.leg2.foot, true);
+
+  // Volumetric Torso
+  if (p.shoulder && p.hip) s += drawTorsoBlock(p.shoulder, p.hip, p.spineMid);
+
+  // Head and Neck Connection
+  if (p.head && p.shoulder) s += `<line x1="${p.head[0]}" y1="${p.head[1]}" x2="${p.shoulder[0]}" y2="${p.shoulder[1]}" class="limb-near" style="stroke-width:8px;"/>`;
+
+  // Near-side limbs (foreground high contrast)
+  if (p.arm1 && p.shoulder) s += drawLimb(p.shoulder, p.arm1.elbow, false) + drawLimb(p.arm1.elbow, p.arm1.hand, false);
+  if (p.leg1 && p.hip) s += drawLimb(p.hip, p.leg1.knee, false) + drawLimb(p.leg1.knee, p.leg1.foot, false);
+
+  // Joint Nodes
+  if (p.shoulder) s += drawJoint(p.shoulder);
+  if (p.hip) s += drawJoint(p.hip, true); // Active hip hinge highlight
+  if (p.arm1) s += drawJoint(p.arm1.elbow) + drawJoint(p.arm1.hand);
+  if (p.leg1) s += drawJoint(p.leg1.knee) + drawJoint(p.leg1.foot);
+
+  // Head Silhouette
+  if (p.head) s += `<circle cx="${p.head[0]}" cy="${p.head[1]}" r="8" class="pose-head"/>`;
+
+  s += `</svg>`;
+  return s;
+}
+
+function drawFigure(poseKey) {
+  return drawPoseObject(POSES[poseKey]);
+}
+
+/* ---------- Routine data ---------- */
+const BLOCKS = [
+  {
+    title: "Early Morning Mobility",
+    focus: "Greet your joints and wake up your nervous system.",
+    seconds: 15 * 60,
+    exercises: [
+      { name: "Diaphragmatic breathing", dur: "1 min", poses:['standNeutral','standInhale','standNeutral'], labels:['Exhale','Inhale','Exhale'] },
+      { name: "Neck circles + chin tucks", dur: "1 min", poses:['standNeutral','neckTiltSide','chinTuck'], labels:['Neutral','Circle side','Chin tuck'] },
+      { name: "Shoulder rolls + arm circles", dur: "1 min", poses:['standNeutral','shoulderRollUp','armCircleOverhead'], labels:['Neutral','Shoulders up','Arms overhead'] },
+      { name: "Cat-Cow flow", dur: "2 min", poses:['quadrupedNeutral','catRound','cowArch'], labels:['Neutral','Cat (round)','Cow (arch)'] },
+      { name: "Thread the needle, each side", dur: "2 min", poses:['quadrupedNeutral','threadReach','threadRotateUp'], labels:['Neutral','Thread under','Rotate open'] },
+      { name: "90/90 hip switches", dur: "2 min", poses:['hip90Left','hip90Transition','hip90Right'], labels:['Right hip','Transition','Left hip'] },
+      { name: "World's greatest stretch, each side", dur: "2 min", poses:['lungeDown','lungeRotateElbowGround','lungeRotateArmUp'], labels:['Lunge','Elbow down','Rotate up'] },
+      { name: "Child's pose with lateral reach", dur: "2 min", poses:['childPoseCenter','childPoseReachSide','childPoseCenter'], labels:['Center','Reach side','Center'] },
+      { name: "Standing forward fold to slow roll-up", dur: "2 min", poses:['standNeutral','forwardFoldHang','standNeutral'], labels:['Stand tall','Fold forward','Roll back up'] },
+    ],
+  },
+  {
+    title: "Core & Glute Activation",
+    focus: "Establish stability — perfect form over intensity.",
+    seconds: 15 * 60,
+    exercises: [
+      { name: "Dead bug", dur: "2 min", poses:['deadBugStart','deadBugExtend','deadBugStart'], labels:['Tabletop','Extend limbs','Tabletop'] },
+      { name: "Bird-dog with 2-second hold", dur: "2 min", poses:['quadrupedNeutral','birdDogExtend','quadrupedNeutral'], labels:['Neutral','Extend & hold','Neutral'] },
+      { name: "Glute bridge, bodyweight", dur: "2 min", poses:['bridgeDown','bridgeMid','bridgeUp'], labels:['Hips down','Lifting','Hips up'] },
+      { name: "Glute bridge march", dur: "2 min", poses:['bridgeUp','bridgeMarchKneeUp','bridgeUp'], labels:['Hips up','Knee drive','Hips up'] },
+      { name: "Side-lying clamshells, each side", dur: "2 min", poses:['clamClosed','clamOpen','clamClosed'], labels:['Closed','Open','Closed'] },
+      { name: "Forearm plank, broken into sets", dur: "2 min", poses:['plankSetup','plankHold','plankHold'], labels:['Set up','Hold','Hold steady'] },
+      { name: "Standing pallof press or band hold", dur: "2 min", poses:['standArmsExtendedIn','pallofPressOut','standArmsExtendedIn'], labels:['Hands in','Press out','Hands in'] },
+      { name: "Bear hold, short intervals", dur: "1 min", poses:['quadrupedNeutral','bearHoverKneesUp','bearHoverKneesUp'], labels:['Neutral','Knees hover','Hold'] },
+    ],
+  },
+  {
+    title: "Afternoon Postural Reset",
+    focus: "Combat prolonged stillness with controlled movement.",
+    seconds: 15 * 60,
+    exercises: [
+      { name: "Brisk walk or march in place, arms swinging", dur: "3 min", poses:['standNeutral','marchKneeUp','standNeutral'], labels:['Stand','Knee drive','Stand'] },
+      { name: "Walking lunges with torso rotation", dur: "3 min", poses:['lungeDown','lungeRotateArmUp','standNeutral'], labels:['Lunge','Rotate torso','Step through'] },
+      { name: "Cossack squats, each side", dur: "2 min", poses:['cossackCenter','cossackShiftSide','cossackCenter'], labels:['Wide stance','Shift side','Wide stance'] },
+      { name: "Bodyweight squat, 2-sec pause at bottom", dur: "3 min", poses:['squatStand','squatBottom','squatBottom'], labels:['Stand','Lower','Pause'] },
+      { name: "Reverse lunge to high knee, each side", dur: "2 min", poses:['standNeutral','lungeBack','highKneeUp'], labels:['Stand','Step back','Drive knee up'] },
+      { name: "Standing thoracic rotations", dur: "2 min", poses:['goalpostCenter','rotateRight','rotateLeft'], labels:['Center','Rotate right','Rotate left'] },
+    ],
+  },
+  {
+    title: "Evening Full-Body Cooldown",
+    focus: "Restore range of motion and calm the nervous system.",
+    seconds: 15 * 60,
+    exercises: [
+      { name: "Box or 4-7-8 breathing, lying down", dur: "2 min", poses:['lyingCalm','lyingInhale','lyingCalm'], labels:['Exhale','Inhale','Exhale'] },
+      { name: "Supine figure-four stretch, each side", dur: "3 min", poses:['lyingKneesBent','figureFourCross','figureFourPull'], labels:['Knees bent','Cross ankle','Pull in'] },
+      { name: "Lying butterfly stretch", dur: "2 min", poses:['lyingKneesBent','butterflyOpen','butterflyOpen'], labels:['Knees bent','Soles together','Relax open'] },
+      { name: "Supine spinal twist, each side", dur: "3 min", poses:['lyingKneesBent','twistKneesSide','twistKneesOtherSide'], labels:['Knees bent','Twist one side','Twist other side'] },
+      { name: "Legs-up-the-wall", dur: "3 min", poses:['lyingKneesBent','legsRaisingMid','legsUpVertical'], labels:['Knees bent','Raising legs','Legs vertical'] },
+      { name: "Final relaxed breathing, eyes closed", dur: "2 min", poses:['lyingCalm','lyingCalm','lyingCalm'], labels:['Relax','Relax','Relax'] },
+    ],
+  },
+];
+
+let current = 0;
+let timers = BLOCKS.map(b => b.seconds);
+let running = false;
+let intervalId = null;
+let checks = BLOCKS.map(b => b.exercises.map(() => false));
+let expanded = new Set();
+let viewModes = {}; 
+let animStates = {}; 
+
+const arcNav = document.getElementById('arcNav');
+const blockTitle = document.getElementById('blockTitle');
+const blockFocus = document.getElementById('blockFocus');
+const timerDisplay = document.getElementById('timerDisplay');
+const playBtn = document.getElementById('playBtn');
+const resetBtn = document.getElementById('resetBtn');
+const exList = document.getElementById('exList');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const dayProgress = document.getElementById('dayProgress');
+const clearAll = document.getElementById('clearAll');
+
+const shortLabels = ["Morning", "Core", "Postural", "Evening"];
+const chevronSvg = `<svg class="ex-chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function fmt(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
+function blockComplete(i) {
+  return checks[i].every(Boolean);
+}
+
+function renderArc() {
+  arcNav.innerHTML = '';
+  BLOCKS.forEach((b, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'arc-btn' + (i === current ? ' active' : '') + (blockComplete(i) ? ' done' : '');
+    if (i === current) btn.classList.add('active');
+    if (blockComplete(i)) btn.classList.add('done');
+    btn.innerHTML = shortLabels[i] + '<span class="time">' + fmt(timers[i]) + '</span>';
+    btn.onclick = () => switchBlock(i);
+    arcNav.appendChild(btn);
+  });
+  const doneCount = BLOCKS.filter((_, i) => blockComplete(i)).length;
+  dayProgress.textContent = doneCount + ' / 4 blocks done';
+}
+
+function renderBlock() {
+  const b = BLOCKS[current];
+  blockTitle.textContent = b.title;
+  blockFocus.textContent = b.focus;
+  timerDisplay.textContent = fmt(timers[current]);
+  playBtn.textContent = running ? 'Pause' : (timers[current] === b.seconds ? 'Start' : 'Resume');
+  playBtn.classList.toggle('pause', running);
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === BLOCKS.length - 1;
+
+  exList.innerHTML = '';
+  b.exercises.forEach((ex, idx) => {
+    const key = current + '_' + idx;
+    const isChecked = checks[current][idx];
+    const isExpanded = expanded.has(key);
+    const mode = viewModes[key] || 'gif';
+
+    if (!animStates[key]) {
+      animStates[key] = { paused: false, speed: 1 };
+    }
+
+    const li = document.createElement('li');
+    li.className = 'ex-item' + (isExpanded ? ' expanded' : '');
+
+    let contentHtml = '';
+    if (isExpanded) {
+      if (mode === 'gif') {
+        const pills = (ex.labels || []).map((lbl, i) => `
+          <div class="step-pill" id="pill_${key}_${i}">${lbl}</div>
+        `).join('');
+
+        contentHtml = `
+          <div class="view-toolbar">
+            <div class="view-tabs">
+              <button class="tab-btn active" data-mode="gif" data-key="${key}">🎬 GIF Loop</button>
+              <button class="tab-btn" data-mode="grid" data-key="${key}">🖼️ 3-Step Cards</button>
+            </div>
+            <div class="anim-controls">
+              <button class="ctrl-btn speed-btn" data-key="${key}">${animStates[key].speed}x</button>
+              <button class="ctrl-btn play-pause-btn" data-key="${key}">${animStates[key].paused ? '▶' : '❚❚'}</button>
+            </div>
+          </div>
+          <div class="anim-container">
+            <div class="anim-stage" id="stage_${key}"></div>
+            <div class="anim-step-pills">${pills}</div>
+          </div>
+        `;
+      } else {
+        const poseCells = (ex.poses || []).map((poseKey, i) => `
+          <div class="pose-cell">
+            ${drawFigure(poseKey)}
+            <div class="pose-caption">${(ex.labels && ex.labels[i]) || ''}</div>
+          </div>
+        `).join('');
+
+        contentHtml = `
+          <div class="view-toolbar">
+            <div class="view-tabs">
+              <button class="tab-btn" data-mode="gif" data-key="${key}">🎬 GIF Loop</button>
+              <button class="tab-btn active" data-mode="grid" data-key="${key}">🖼️ 3-Step Cards</button>
+            </div>
+          </div>
+          <div class="pose-strip">${poseCells}</div>
+        `;
+      }
+    }
+
+    li.innerHTML = `
+      <div class="ex-row">
+        <button class="ex-check${isChecked ? ' checked' : ''}" data-idx="${idx}">${isChecked ? '✓' : ''}</button>
+        <button class="ex-main" data-idx="${idx}">
+          <span class="ex-text ex-name${isChecked ? ' checked-text' : ''}">${ex.name}</span>
+          <span class="ex-dur">${ex.dur}</span>
+          ${chevronSvg}
+        </button>
+      </div>
+      <div class="ex-details">${contentHtml}</div>
+    `;
+    exList.appendChild(li);
+  });
+
+  exList.querySelectorAll('.ex-check').forEach(cb => {
+    cb.onclick = () => {
+      const idx = parseInt(cb.dataset.idx, 10);
+      checks[current][idx] = !checks[current][idx];
+      renderBlock();
+      renderArc();
+    };
+  });
+  exList.querySelectorAll('.ex-main').forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      const key = current + '_' + idx;
+      if (expanded.has(key)) expanded.delete(key);
+      else expanded.add(key);
+      renderBlock();
+    };
+  });
+
+  exList.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      viewModes[key] = btn.dataset.mode;
+      renderBlock();
+    };
+  });
+
+  exList.querySelectorAll('.play-pause-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      animStates[key].paused = !animStates[key].paused;
+      btn.textContent = animStates[key].paused ? '▶' : '❚❚';
+    };
+  });
+
+  exList.querySelectorAll('.speed-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const key = btn.dataset.key;
+      const speeds = [0.5, 1, 1.5, 2];
+      const nextIdx = (speeds.indexOf(animStates[key].speed) + 1) % speeds.length;
+      animStates[key].speed = speeds[nextIdx];
+      btn.textContent = animStates[key].speed + 'x';
+    };
+  });
+}
+
+/* Loop Animation Frame Renderer */
+let animFrameId = null;
+function loopAnimationLoop(timestamp) {
+  const b = BLOCKS[current];
+  b.exercises.forEach((ex, idx) => {
+    const key = current + '_' + idx;
+    if (!expanded.has(key) || (viewModes[key] && viewModes[key] !== 'gif')) return;
+
+    const stage = document.getElementById('stage_' + key);
+    if (!stage) return;
+
+    const state = animStates[key] || { paused: false, speed: 1 };
+    if (!state.time) state.time = timestamp;
+    if (!state.progress) state.progress = 0;
+
+    if (!state.paused) {
+      const delta = (timestamp - state.time) * 0.001 * state.speed;
+      state.progress = (state.progress + delta / 2.2) % 1.0; 
+    }
+    state.time = timestamp;
+
+    const pKeys = ex.poses || [];
+    const p0 = POSES[pKeys[0]];
+    const p1 = POSES[pKeys[1]];
+    const p2 = POSES[pKeys[2]];
+
+    let currentPose = p0;
+    let activeIdx = 0;
+    const u = state.progress;
+
+    if (u < 0.33) {
+      const t = u / 0.33;
+      currentPose = interpolatePose(p0, p1, t);
+      activeIdx = 0;
+    } else if (u < 0.66) {
+      const t = (u - 0.33) / 0.33;
+      currentPose = interpolatePose(p1, p2, t);
+      activeIdx = 1;
+    } else {
+      const t = (u - 0.66) / 0.34;
+      currentPose = interpolatePose(p2, p0, t);
+      activeIdx = 2;
+    }
+
+    stage.innerHTML = drawPoseObject(currentPose);
+
+    for (let i = 0; i < 3; i++) {
+      const pill = document.getElementById(`pill_${key}_${i}`);
+      if (pill) pill.classList.toggle('active', i === activeIdx);
+    }
+  });
+
+  animFrameId = requestAnimationFrame(loopAnimationLoop);
+}
+
+function switchBlock(i) {
+  pauseTimer();
+  current = i;
+  renderBlock();
+  renderArc();
+}
+
+function tick() {
+  if (timers[current] > 0) {
+    timers[current] -= 1;
+    timerDisplay.textContent = fmt(timers[current]);
+    renderArc();
+  } else {
+    pauseTimer();
+  }
+}
+
+function playTimer() {
+  running = true;
+  intervalId = setInterval(tick, 1000);
+  renderBlock();
+}
+
+function pauseTimer() {
+  running = false;
+  clearInterval(intervalId);
+  renderBlock();
+}
+
+playBtn.onclick = () => {
+  if (running) pauseTimer();
+  else playTimer();
+};
+resetBtn.onclick = () => {
+  pauseTimer();
+  timers[current] = BLOCKS[current].seconds;
+  renderBlock();
+  renderArc();
+};
+prevBtn.onclick = () => { if (current > 0) switchBlock(current - 1); };
+nextBtn.onclick = () => { if (current < BLOCKS.length - 1) switchBlock(current + 1); };
+clearAll.onclick = () => {
+  pauseTimer();
+  timers = BLOCKS.map(b => b.seconds);
+  checks = BLOCKS.map(b => b.exercises.map(() => false));
+  expanded.clear();
+  renderBlock();
+  renderArc();
+};
+
+renderArc();
+renderBlock();
+animFrameId = requestAnimationFrame(loopAnimationLoop);
+</script>
+</body>
+</html>
